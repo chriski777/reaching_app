@@ -1,13 +1,16 @@
 from ximea import xiapi
 from collections import deque
+import ImageBuffer as imgBuf
 import cv2
 import time
 import datetime
+import h5py
+import cPickle as pickle
 
 #Minimum trigger period is dependent on exposure time 
 trig_min = 4000
 #Image Buffer queue in seconds 
-queueTime = 2
+queueTime = 5
 cameraOne = xiapi.Camera()
 
 #start communication
@@ -84,8 +87,9 @@ try:
         #Remove first image in buffer if buffer is filled
         if (len(imageBuffer) == queueTime*int(cameraOne.get_framerate())):
             removed = imageBuffer.popleft()
-            print('Frame %d Image popped' % removed[0])
-        imageBuffer.append((img.nframe,data))
+            print('Frame %d Image popped' % removed.frameNum)
+        #Add tuple of image frame, date time, and numpy array of image
+        imageBuffer.append(imgBuf.ImageTuple(img.nframe,datetime.datetime.now(),data))
         #cv2.imshow('XiCAM %s' % cameraOne.get_device_name(), data)
         cv2.waitKey(1)
 except KeyboardInterrupt:
@@ -98,10 +102,27 @@ except xiapi.Xi_error as err:
 print('Stopping acquisition...')
 cameraOne.stop_acquisition()
 
-print("Total time: " + str(time.time() - t0))
-print("Total frames: " + frameNum)
+#serialize the buffer stream for later debayering/postprocessing
+print("Serializing buffer stream...")
+serStart = time.time()
+with open('pickletest', 'w') as fp:
+    pickle.dump(imageBuffer, fp, protocol=-1)
+serEnd = time.time()
+print("Time it took to serialize: %f ms" %((serEnd - serStart)*1000))
+
+#SERIALIZE WITH HDF5
+hdfStart = time.time()
+h = h5py.File('myfile7.hdf5', 'w', libver='latest')
+for i in imageBuffer:
+    h.create_dataset(i.title, data=i.img)
+hdfEnd = time.time()
+print((hdfEnd - hdfStart)*1000)
+
+
+print("Total Acquisition Time: %s " % str(time.time() - t0))
+print("Total Frames: %d" % frameNum)
 print("Image Buffer Length: %d" % len(imageBuffer))
-print("Image Buffer contains frames from: %d to %d" %(imageBuffer[0][0],imageBuffer[len(imageBuffer) -1][0]))
+print("Image Buffer contains frames from: %d to %d" %(imageBuffer[0].nFrame,imageBuffer[len(imageBuffer) -1].nFrame))
 #stop communication
 cameraOne.close_device()
 
