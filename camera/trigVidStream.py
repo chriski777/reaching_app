@@ -1,11 +1,10 @@
 from ximea import xiapi
 from collections import deque
-import ImageBuffer as imgBuf
+import ImageTuple as imgTup
 import cv2
 import time
 import datetime
 import h5py
-import cPickle as pickle
 
 #Minimum trigger period is dependent on exposure time 
 trig_min = 4000
@@ -48,7 +47,7 @@ try:
     intFrame = cameraOne.get_framerate()
     while True:
         #get data and pass them from camera to img, wait 10s for possible signals
-        cameraOne.get_image(img,timeout = 10000)
+        cameraOne.get_image(img,timeout = 5000)
         print('Image %d Acquired' % img.nframe)
         #create numpy array with data from camera. Dimensions of the array are 
         #determined by imgdataformat
@@ -89,7 +88,7 @@ try:
             removed = imageBuffer.popleft()
             print('Frame %d Image popped' % removed.frameNum)
         #Add tuple of image frame, date time, and numpy array of image
-        imageBuffer.append(imgBuf.ImageTuple(img.nframe,datetime.datetime.now(),data))
+        imageBuffer.append(imgTup.ImageTuple(img.nframe,datetime.datetime.now(),data))
         #cv2.imshow('XiCAM %s' % cameraOne.get_device_name(), data)
         cv2.waitKey(1)
 except KeyboardInterrupt:
@@ -102,27 +101,19 @@ except xiapi.Xi_error as err:
 print('Stopping acquisition...')
 cameraOne.stop_acquisition()
 
-#serialize the buffer stream for later debayering/postprocessing
-print("Serializing buffer stream...")
-serStart = time.time()
-with open('pickletest', 'w') as fp:
-    pickle.dump(imageBuffer, fp, protocol=-1)
-serEnd = time.time()
-print("Time it took to serialize: %f ms" %((serEnd - serStart)*1000))
-
 #SERIALIZE WITH HDF5
+#Create Unique Trial name
 hdfStart = time.time()
 h = h5py.File('myfile7.hdf5', 'w', libver='latest')
 for i in imageBuffer:
     h.create_dataset(i.title, data=i.img)
 hdfEnd = time.time()
-print((hdfEnd - hdfStart)*1000)
-
+print("Time it took to serialize hdf5: %f ms" % ((hdfEnd - hdfStart)*1000))
 
 print("Total Acquisition Time: %s " % str(time.time() - t0))
-print("Total Frames: %d" % frameNum)
+print("Total Frames: %d" % img.nframe)
 print("Image Buffer Length: %d" % len(imageBuffer))
-print("Image Buffer contains frames from: %d to %d" %(imageBuffer[0].nFrame,imageBuffer[len(imageBuffer) -1].nFrame))
+print("Image Buffer contains frames from: %d to %d" %(imageBuffer[0].frameNum,imageBuffer[len(imageBuffer) -1].frameNum))
 #stop communication
 cameraOne.close_device()
 
