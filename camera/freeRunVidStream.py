@@ -90,6 +90,7 @@ except KeyboardInterrupt:
 print('Stopping acquisition...')
 cameraOne.stop_acquisition()
 
+print ("Available Bandwidth: %s " % cameraOne.get_available_bandwidth())
 print("Total Acquisition Time: %s " % str(time.time() - t0))
 print("Total Frames: %d" % img.nframe)
 print("Image Buffer Length: %d" % len(imageBuffer))

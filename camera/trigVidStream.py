@@ -5,12 +5,16 @@ import cv2
 import time
 import datetime
 import h5py
+import os 
 
 #Minimum trigger period is dependent on exposure time 
 trig_min = 4000
 #Image Buffer queue in seconds 
 queueTime = 5
 cameraOne = xiapi.Camera()
+#Path that we save serialized files into 
+path = 'E:/trials/'
+trial_fn = 'myfile1.hdf5'
 
 #start communication
 print('Opening first camera...')
@@ -103,8 +107,10 @@ cameraOne.stop_acquisition()
 
 #SERIALIZE WITH HDF5
 #Create Unique Trial name
+if not os.path.isdir(path):
+    os.makedirs(path)
 hdfStart = time.time()
-h = h5py.File('myfile7.hdf5', 'w', libver='latest')
+h = h5py.File(os.path.join(path, trial_fn), 'w', libver='latest')
 for i in imageBuffer:
     h.create_dataset(i.title, data=i.img)
 hdfEnd = time.time()

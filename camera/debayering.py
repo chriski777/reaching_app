@@ -3,6 +3,8 @@ import h5py
 import cv2
 
 dirname = "trialimgs"
+path = 'E:/trials/'
+trial_fn = 'myfile1.hdf5'
 
 def fnConverter(frame, dt):
     frmNum = frame.split(" ")[1]
@@ -15,7 +17,7 @@ def debayerSave(filename):
 	    os.makedirs(dirname)
 	if not os.path.isdir(nestedDir):
 	    os.makedirs(nestedDir)
-	f = h5py.File(filename, 'r')
+	f = h5py.File(os.path.join(path, filename), 'r')
 	for key in f.keys():
 	    image = f[key]
 	    debayer = cv2.cvtColor(image.value,cv2.COLOR_BAYER_BG2BGR)
@@ -23,4 +25,4 @@ def debayerSave(filename):
 	    cv2.imwrite('%s/imgRGB%s.png' % (nestedDir, convertedFn), debayer)
 	f.close()
 
-debayerSave("myfile7.hdf5")
+debayerSave(trial_fn)
