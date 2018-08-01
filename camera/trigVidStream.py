@@ -7,11 +7,18 @@ import datetime
 import h5py
 import os 
 
-#Minimum trigger period is dependent on exposure time 
-trig_min = 4000
-#Image Buffer queue in seconds 
-queueTime = 5
-cameraOne = xiapi.Camera()
+#Time since start of program
+init_time = time.time()
+#Values for BOTH cameras
+exp_per = 4000 #Minimum trigger period is dependent on exposure time (microseconds)
+gain_val = 5.0 #Gain: sensitivity of camera
+imgdf = 'XI_RAW8' #Direct camera output with no processing. RAW8 is necessary to achieve full FPS capabilities!
+sensor_feat = 1 #Set to 1 for faster FPS 
+queueTime = 5  #Image Buffer queue length (seconds)
+
+
+cameraOne = xiapi.Camera(dev_id = 0)
+cameraTwo = xiapi.Camera(dev_id = 1)
 #Path that we save serialized files into 
 path = 'E:/trials/'
 trial_fn = 'myfile1.hdf5'
@@ -19,20 +26,37 @@ trial_fn = 'myfile1.hdf5'
 #start communication
 print('Opening first camera...')
 cameraOne.open_device()
+print('Opening second camera...')
+cameraTwo.open_device()
 
-#Settings
-cameraOne.set_imgdataformat('XI_RAW8')
-cameraOne.set_exposure(trig_min)
-cameraOne.set_gain(20.0)
-cameraOne.set_sensor_feature_value(1)
+#Initialize settings for both cameras
+cameraOne.set_imgdataformat(imgdf)
+cameraOne.set_exposure(exp_per)
+cameraOne.set_gain(gain_val)
+cameraOne.set_sensor_feature_value(sensor_feat)
+
+cameraTwo.set_imgdataformat(imgdf)
+cameraTwo.set_exposure(exp_per)
+cameraTwo.set_gain(gain_val)
+cameraTwo.set_sensor_feature_value(sensor_feat)
 #Prepare camera for trigger mode on rising edge of input signal
 cameraOne.set_gpi_selector("XI_GPI_PORT1")
 cameraOne.set_gpi_mode("XI_GPI_TRIGGER")
 cameraOne.set_trigger_source("XI_TRG_EDGE_RISING")
 
+cameraTwo.set_gpi_selector("XI_GPI_PORT1")
+cameraTwo.set_gpi_mode("XI_GPI_TRIGGER")
+cameraTwo.set_trigger_source("XI_TRG_EDGE_RISING")
+
+print ('Camera One Settings: ')
 print('Exposure was set to %i us' %cameraOne.get_exposure())
 print('Gain was set to %f db' %cameraOne.get_gain())
 print('Img Data Format set to %s' %cameraOne.get_imgdataformat())
+
+print ('Camera Two Settings: ')
+print('Exposure was set to %i us' %cameraTwo.get_exposure())
+print('Gain was set to %f db' %cameraTwo.get_gain())
+print('Img Data Format set to %s' %cameraTwo.get_imgdataformat())
 
 #create imageBuffer with dequeue
 imageBuffer = deque()

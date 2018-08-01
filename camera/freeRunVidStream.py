@@ -5,29 +5,47 @@ import cv2
 import time
 import datetime
 
-#Minimum trigger period is dependent on exposure time 
-exp_per = 6700
-#Image Buffer queue in seconds 
-queueTime = 5
-cameraOne = xiapi.Camera()
+#Time since start of program
+init_time = time.time()
+#Values for BOTH cameras
+exp_per = 4000 #Minimum trigger period is dependent on exposure time (microseconds)
+gain_val = 5.0 #Gain: sensitivity of camera
+imgdf = 'XI_RAW8' #Direct camera output with no processing. RAW8 is necessary to achieve full FPS capabilities!
+sensor_feat = 1 #Set to 1 for faster FPS 
 
+queueTime = 5  #Image Buffer queue length (seconds)
+
+cameraOne = xiapi.Camera(dev_id = 0)
+cameraTwo = xiapi.Camera(dev_id = 1)
 #start communication
 print('Opening first camera...')
 cameraOne.open_device()
-
-#Settings
-cameraOne.set_imgdataformat('XI_RGB24')
+print('Opening second camera...')
+cameraTwo.open_device()
+#Initialize settings for both cameras
+cameraOne.set_imgdataformat(imgdf)
 cameraOne.set_exposure(exp_per)
-cameraOne.set_gain(20.0)
-cameraOne.set_sensor_feature_value(1)
+cameraOne.set_gain(gain_val)
+cameraOne.set_sensor_feature_value(sensor_feat)
 
+cameraTwo.set_imgdataformat(imgdf)
+cameraTwo.set_exposure(exp_per)
+cameraTwo.set_gain(gain_val)
+cameraTwo.set_sensor_feature_value(sensor_feat)
+
+print ('Camera One Settings: ')
 print('Exposure was set to %i us' %cameraOne.get_exposure())
 print('Gain was set to %f db' %cameraOne.get_gain())
 print('Img Data Format set to %s' %cameraOne.get_imgdataformat())
 
-#create imageBuffer with dequeue
-imageBuffer = deque()
+print ('Camera Two Settings: ')
+print('Exposure was set to %i us' %cameraTwo.get_exposure())
+print('Gain was set to %f db' %cameraTwo.get_gain())
+print('Img Data Format set to %s' %cameraTwo.get_imgdataformat())
 
+#create imageBuffers with dequeue
+imageBufferOne = deque()
+imageBufferTwo = deque()
 #create instance of Image to store image data and metadata
 img = xiapi.Image()
 
@@ -78,10 +96,10 @@ try:
             data, avgFPS, (10,100), font, 0.5, (255, 255, 255), 1
             )
         #Remove first image in buffer if buffer is filled
-        if (len(imageBuffer) == queueTime*int(cameraOne.get_framerate())):
-            removed = imageBuffer.popleft()
+        if (len(imageBufferOne) == queueTime*int(cameraOne.get_framerate())):
+            removed = imageBufferOne.popleft()
         #Add tuple of image frame, date time, and numpy array of image
-        imageBuffer.append(imgTup.ImageTuple(img.nframe,datetime.datetime.now(),data))
+        imageBufferOne.append(imgTup.ImageTuple(img.nframe,datetime.datetime.now(),data))
         cv2.imshow('XiCAM %s' % cameraOne.get_device_name(), data)
         cv2.waitKey(1)
 except KeyboardInterrupt:
@@ -90,11 +108,14 @@ except KeyboardInterrupt:
 print('Stopping acquisition...')
 cameraOne.stop_acquisition()
 
-print ("Available Bandwidth: %s " % cameraOne.get_available_bandwidth())
+print ("Available Bandwidth for camera 1: %s " % cameraOne.get_available_bandwidth())
+print ("Available Bandwidth for camera 2: %s " % cameraTwo.get_available_bandwidth())
+
+print("Lag between start of program and start of acquisition: %s" % str(t0 - init_time))
 print("Total Acquisition Time: %s " % str(time.time() - t0))
 print("Total Frames: %d" % img.nframe)
-print("Image Buffer Length: %d" % len(imageBuffer))
-print("Image Buffer contains frames from: %d to %d" %(imageBuffer[0].frameNum,imageBuffer[len(imageBuffer) -1].frameNum))
+print("Image Buffer Length: %d" % len(imageBufferOne))
+print("Image Buffer contains frames from: %d to %d" %(imageBufferOne[0].frameNum,imageBufferOne[len(imageBufferOne) -1].frameNum))
 #stop communication
 cameraOne.close_device()
 
