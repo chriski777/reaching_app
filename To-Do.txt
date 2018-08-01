@@ -1,0 +1,4 @@
+1. Figure out spikeGadgets
+2. Get Camera circuit set up
+3. Write Statescript to get one camera going
+4. Adjust Camera script to get 2 cameras working

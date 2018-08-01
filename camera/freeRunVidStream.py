@@ -16,32 +16,32 @@ sensor_feat = 1 #Set to 1 for faster FPS
 queueTime = 5  #Image Buffer queue length (seconds)
 
 cameraOne = xiapi.Camera(dev_id = 0)
-cameraTwo = xiapi.Camera(dev_id = 1)
+# cameraTwo = xiapi.Camera(dev_id = 1)
 #start communication
 print('Opening first camera...')
 cameraOne.open_device()
-print('Opening second camera...')
-cameraTwo.open_device()
+# print('Opening second camera...')
+# cameraTwo.open_device()
 #Initialize settings for both cameras
 cameraOne.set_imgdataformat(imgdf)
 cameraOne.set_exposure(exp_per)
 cameraOne.set_gain(gain_val)
 cameraOne.set_sensor_feature_value(sensor_feat)
 
-cameraTwo.set_imgdataformat(imgdf)
-cameraTwo.set_exposure(exp_per)
-cameraTwo.set_gain(gain_val)
-cameraTwo.set_sensor_feature_value(sensor_feat)
+# cameraTwo.set_imgdataformat(imgdf)
+# cameraTwo.set_exposure(exp_per)
+# cameraTwo.set_gain(gain_val)
+# cameraTwo.set_sensor_feature_value(sensor_feat)
 
 print ('Camera One Settings: ')
 print('Exposure was set to %i us' %cameraOne.get_exposure())
 print('Gain was set to %f db' %cameraOne.get_gain())
 print('Img Data Format set to %s' %cameraOne.get_imgdataformat())
 
-print ('Camera Two Settings: ')
-print('Exposure was set to %i us' %cameraTwo.get_exposure())
-print('Gain was set to %f db' %cameraTwo.get_gain())
-print('Img Data Format set to %s' %cameraTwo.get_imgdataformat())
+# print ('Camera Two Settings: ')
+# print('Exposure was set to %i us' %cameraTwo.get_exposure())
+# print('Gain was set to %f db' %cameraTwo.get_gain())
+# print('Img Data Format set to %s' %cameraTwo.get_imgdataformat())
 
 #create imageBuffers with dequeue
 imageBufferOne = deque()
@@ -109,7 +109,7 @@ print('Stopping acquisition...')
 cameraOne.stop_acquisition()
 
 print ("Available Bandwidth for camera 1: %s " % cameraOne.get_available_bandwidth())
-print ("Available Bandwidth for camera 2: %s " % cameraTwo.get_available_bandwidth())
+# print ("Available Bandwidth for camera 2: %s " % cameraTwo.get_available_bandwidth())
 
 print("Lag between start of program and start of acquisition: %s" % str(t0 - init_time))
 print("Total Acquisition Time: %s " % str(time.time() - t0))

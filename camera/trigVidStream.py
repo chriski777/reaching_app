@@ -18,7 +18,7 @@ queueTime = 5  #Image Buffer queue length (seconds)
 
 
 cameraOne = xiapi.Camera(dev_id = 0)
-cameraTwo = xiapi.Camera(dev_id = 1)
+# cameraTwo = xiapi.Camera(dev_id = 1)
 #Path that we save serialized files into 
 path = 'E:/trials/'
 trial_fn = 'myfile1.hdf5'
@@ -26,8 +26,8 @@ trial_fn = 'myfile1.hdf5'
 #start communication
 print('Opening first camera...')
 cameraOne.open_device()
-print('Opening second camera...')
-cameraTwo.open_device()
+# print('Opening second camera...')
+# cameraTwo.open_device()
 
 #Initialize settings for both cameras
 cameraOne.set_imgdataformat(imgdf)
@@ -35,18 +35,18 @@ cameraOne.set_exposure(exp_per)
 cameraOne.set_gain(gain_val)
 cameraOne.set_sensor_feature_value(sensor_feat)
 
-cameraTwo.set_imgdataformat(imgdf)
-cameraTwo.set_exposure(exp_per)
-cameraTwo.set_gain(gain_val)
-cameraTwo.set_sensor_feature_value(sensor_feat)
+# cameraTwo.set_imgdataformat(imgdf)
+# cameraTwo.set_exposure(exp_per)
+# cameraTwo.set_gain(gain_val)
+# cameraTwo.set_sensor_feature_value(sensor_feat)
 #Prepare camera for trigger mode on rising edge of input signal
 cameraOne.set_gpi_selector("XI_GPI_PORT1")
 cameraOne.set_gpi_mode("XI_GPI_TRIGGER")
 cameraOne.set_trigger_source("XI_TRG_EDGE_RISING")
 
-cameraTwo.set_gpi_selector("XI_GPI_PORT1")
-cameraTwo.set_gpi_mode("XI_GPI_TRIGGER")
-cameraTwo.set_trigger_source("XI_TRG_EDGE_RISING")
+# cameraTwo.set_gpi_selector("XI_GPI_PORT1")
+# cameraTwo.set_gpi_mode("XI_GPI_TRIGGER")
+# cameraTwo.set_trigger_source("XI_TRG_EDGE_RISING")
 
 print ('Camera One Settings: ')
 print('Exposure was set to %i us' %cameraOne.get_exposure())
