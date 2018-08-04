@@ -151,7 +151,7 @@ except NameError:
 	print("No acquisition occured.")
 else:
 	print("Total Acquisition Time: %s " % str(recentTime - t0 - serialTime))
-	print("Total Frames: %d" % img.nframe)
+	print("Total Frames: %d" % (img.nframe + 1))
 	print("Image Buffer Length: %d" % len(imageBuffer))
 	print("Image Buffer contains frames from: %d to %d" %(imageBuffer[0].frameNum,imageBuffer[len(imageBuffer) -1].frameNum))
 #stop communication
