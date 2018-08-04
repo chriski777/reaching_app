@@ -21,7 +21,7 @@ cameraOne = xiapi.Camera(dev_id = 0)
 # cameraTwo = xiapi.Camera(dev_id = 1)
 #Path that we save serialized files into 
 path = 'E:/trials/'
-trial_fn = 'myfile1.hdf5'
+trial_fn = 'myfile3.hdf5'
 
 #start communication
 print('Opening first camera...')
@@ -53,10 +53,10 @@ print('Exposure was set to %i us' %cameraOne.get_exposure())
 print('Gain was set to %f db' %cameraOne.get_gain())
 print('Img Data Format set to %s' %cameraOne.get_imgdataformat())
 
-print ('Camera Two Settings: ')
-print('Exposure was set to %i us' %cameraTwo.get_exposure())
-print('Gain was set to %f db' %cameraTwo.get_gain())
-print('Img Data Format set to %s' %cameraTwo.get_imgdataformat())
+# print ('Camera Two Settings: ')
+# print('Exposure was set to %i us' %cameraTwo.get_exposure())
+# print('Gain was set to %f db' %cameraTwo.get_gain())
+# print('Img Data Format set to %s' %cameraTwo.get_imgdataformat())
 
 #create imageBuffer with dequeue
 imageBuffer = deque()
@@ -75,8 +75,10 @@ try:
     intFrame = cameraOne.get_framerate()
     while True:
         #get data and pass them from camera to img, wait 10s for possible signals
-        cameraOne.get_image(img,timeout = 5000)
-        print('Image %d Acquired' % img.nframe)
+        cameraOne.get_image(img,timeout = 1000)
+        #time of most recent image taken
+      	recentTime = time.time()
+        #print('Image %d Acquired' % img.nframe)
         #create numpy array with data from camera. Dimensions of the array are 
         #determined by imgdataformat
         data = img.get_image_data_numpy()
@@ -114,7 +116,7 @@ try:
         #Remove first image in buffer if buffer is filled
         if (len(imageBuffer) == queueTime*int(cameraOne.get_framerate())):
             removed = imageBuffer.popleft()
-            print('Frame %d Image popped' % removed.frameNum)
+            #print('Frame %d Image popped' % removed.frameNum)
         #Add tuple of image frame, date time, and numpy array of image
         imageBuffer.append(imgTup.ImageTuple(img.nframe,datetime.datetime.now(),data))
         #cv2.imshow('XiCAM %s' % cameraOne.get_device_name(), data)
@@ -138,12 +140,20 @@ h = h5py.File(os.path.join(path, trial_fn), 'w', libver='latest')
 for i in imageBuffer:
     h.create_dataset(i.title, data=i.img)
 hdfEnd = time.time()
-print("Time it took to serialize hdf5: %f ms" % ((hdfEnd - hdfStart)*1000))
 
-print("Total Acquisition Time: %s " % str(time.time() - t0))
-print("Total Frames: %d" % img.nframe)
-print("Image Buffer Length: %d" % len(imageBuffer))
-print("Image Buffer contains frames from: %d to %d" %(imageBuffer[0].frameNum,imageBuffer[len(imageBuffer) -1].frameNum))
+serialTime = hdfEnd - hdfStart
+lagTime = t0 - init_time
+print("Time it took to serialize hdf5: %f ms" % ((serialTime)*1000))
+print("Lag between start of program and start of acquisition: %s" % str(lagTime))
+try:
+	recentTime
+except NameError:
+	print("No acquisition occured.")
+else:
+	print("Total Acquisition Time: %s " % str(recentTime - t0 - serialTime))
+	print("Total Frames: %d" % img.nframe)
+	print("Image Buffer Length: %d" % len(imageBuffer))
+	print("Image Buffer contains frames from: %d to %d" %(imageBuffer[0].frameNum,imageBuffer[len(imageBuffer) -1].frameNum))
 #stop communication
 cameraOne.close_device()
 
