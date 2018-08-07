@@ -16,12 +16,12 @@ exp_per = 4000 #Minimum trigger period is dependent on exposure time (microsecon
 gain_val = 5.0 #Gain: sensitivity of camera
 imgdf = 'XI_RAW8' #Direct camera output with no processing. RAW8 is necessary to achieve full FPS capabilities!
 sensor_feat = 1 #Set to 1 for faster FPS 
-queueTime = 5  #Image Buffer queue length (seconds)
+queueTime = 8  #Image Buffer queue length (seconds)
 timeOut = 5000 # time interval for trigger to occur before Error
 serialTimes = deque() #deque of all serialTimes. Use deque because adding is constant time unlike list which is on order of n.
 
 cameraOne = xiapi.Camera(dev_id = 0)
-# cameraTwo = xiapi.Camera(dev_id = 1)
+#cameraTwo = xiapi.Camera(dev_id = 1)
 #Path that we save serialized files into 
 path = '/media/new_drive/trials/'
 
@@ -29,6 +29,8 @@ path = '/media/new_drive/trials/'
 def serialize(imageBuffer):
 	#SERIALIZE WITH HDF5
 	#Create Unique Trial names
+	#Turn VDO on to alert ECU to wait until serialization over
+	cameraOne.set_gpo_mode("XI_GPO_ON")
 	trial_fn = 'myfile3.hdf5'
 	if not os.path.isdir(path):
 		os.makedirs(path)
@@ -42,6 +44,8 @@ def serialize(imageBuffer):
 	print("Image Buffer Length: %d" % len(imageBuffer))
 	print("Image Buffer contains frames from: %d to %d" %(imageBuffer[0].frameNum,imageBuffer[len(imageBuffer) -1].frameNum))
 	serialTimes.append(serialTime)
+	#turn GPO off 
+	cameraOne.set_gpo_mode("XI_GPO_OFF")
 
 #start communication
 print('Opening first camera...')
@@ -59,6 +63,7 @@ cameraOne.set_sensor_feature_value(sensor_feat)
 # cameraTwo.set_exposure(exp_per)
 # cameraTwo.set_gain(gain_val)
 # cameraTwo.set_sensor_feature_value(sensor_feat)
+
 #Prepare camera for trigger mode on rising edge of input signal
 cameraOne.set_gpi_selector("XI_GPI_PORT1")
 cameraOne.set_gpi_mode("XI_GPI_TRIGGER")
@@ -67,6 +72,9 @@ cameraOne.set_trigger_source("XI_TRG_EDGE_RISING")
 # cameraTwo.set_gpi_selector("XI_GPI_PORT1")
 # cameraTwo.set_gpi_mode("XI_GPI_TRIGGER")
 # cameraTwo.set_trigger_source("XI_TRG_EDGE_RISING")
+
+cameraOne.set_gpo_selector("XI_GPO_PORT1")
+cameraOne.set_gpo_mode("XI_GPO_ON")
 
 print ('Camera One Settings: ')
 print('Exposure was set to %i us' %cameraOne.get_exposure())
@@ -78,15 +86,19 @@ print('Img Data Format set to %s' %cameraOne.get_imgdataformat())
 # print('Gain was set to %f db' %cameraTwo.get_gain())
 # print('Img Data Format set to %s' %cameraTwo.get_imgdataformat())
 
-#create imageBuffer with dequeue
+#create imageBuffers with dequeue
 imageBuffer = deque()
+#imageBufferTwo = deque()
 
 #create instance of Image to store image data and metadata
 img = xiapi.Image()
+#imgTwo = xiapi.Image()
 
 #start data acquisition
 print('Starting data acquisition...')
 cameraOne.start_acquisition()
+#cameraTwo.start_acquisition()
+
 print('Starting video. Press CTRL+C to exit.')
 t0 = time.time()
 startTime = t0
