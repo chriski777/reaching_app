@@ -3,7 +3,7 @@ import h5py
 import cv2
 
 dirname = "trialimgs"
-path = 'E:/trials/'
+path = '/media/new_drive/trials/'
 trial_fn = 'myfile1.hdf5'
 
 def fnConverter(frame, dt):
