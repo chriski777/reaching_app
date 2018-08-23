@@ -7,8 +7,6 @@ import datetime
 import h5py
 import os 
 
-
-
 #Time since start of program
 init_time = time.time()
 #Values for BOTH cameras
@@ -17,7 +15,7 @@ gain_val = 5.0 #Gain: sensitivity of camera
 imgdf = 'XI_RAW8' #Direct camera output with no processing. RAW8 is necessary to achieve full FPS capabilities!
 sensor_feat = 1 #Set to 1 for faster FPS 
 queueTime = 8  #Image Buffer queue length (seconds)
-timeOut = 5000 # time interval for trigger to occur before Error
+timeOut = 5000 # time interval for trigger to occur before TimeOutError
 serialTimes = deque() #deque of all serialTimes. Use deque because adding is constant time unlike list which is on order of n.
 
 cameraOne = xiapi.Camera(dev_id = 0)
@@ -52,6 +50,7 @@ print('Opening first camera...')
 cameraOne.open_device()
 # print('Opening second camera...')
 # cameraTwo.open_device()
+
 
 #Initialize settings for both cameras
 cameraOne.set_imgdataformat(imgdf)
@@ -99,7 +98,7 @@ print('Starting data acquisition...')
 cameraOne.start_acquisition()
 #cameraTwo.start_acquisition()
 
-print('Starting video. Press CTRL+C to exit.')
+print('Starting video. Press CTRL+C to record. ')
 t0 = time.time()
 startTime = t0
 prevFrame = 0
