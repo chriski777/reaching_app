@@ -6,6 +6,7 @@ import time
 import datetime
 import h5py
 import os 
+import numpy as np
 
 #Time since start of program
 init_time = time.time()
@@ -14,9 +15,10 @@ exp_per = 4000 #Minimum trigger period is dependent on exposure time (microsecon
 gain_val = 5.0 #Gain: sensitivity of camera
 imgdf = 'XI_RAW8' #Direct camera output with no processing. RAW8 is necessary to achieve full FPS capabilities!
 sensor_feat = 1 #Set to 1 for faster FPS 
-queueTime = 8  #Image Buffer queue length (seconds)
+queueTime = 5  #Image Buffer queue length (seconds)
 timeOut = 5000 # time interval for trigger to occur before TimeOutError
 serialTimes = deque() #deque of all serialTimes. Use deque because adding is constant time unlike list which is on order of n.
+trigTimes = deque() #deque of timestamps for each trigger input 
 
 cameraOne = xiapi.Camera(dev_id = 0)
 #cameraTwo = xiapi.Camera(dev_id = 1)
@@ -73,7 +75,7 @@ cameraOne.set_trigger_source("XI_TRG_EDGE_RISING")
 # cameraTwo.set_trigger_source("XI_TRG_EDGE_RISING")
 
 cameraOne.set_gpo_selector("XI_GPO_PORT1")
-cameraOne.set_gpo_mode("XI_GPO_ON")
+cameraOne.set_gpo_mode("XI_GPO_EXPOSURE_ACTIVE")
 
 print ('Camera One Settings: ')
 print('Exposure was set to %i us' %cameraOne.get_exposure())
@@ -110,6 +112,7 @@ while True:
 		cameraOne.get_image(img,timeout = timeOut)
 		#time of most recent image taken
 		recentTime = time.time()
+		trigTimes.append(recentTime)
 		#print('Image %d Acquired' % img.nframe)
 		#create numpy array with data from camera. Dimensions of the array are 
 		#determined by imgdataformat
@@ -184,5 +187,7 @@ while True:
 		#stop communication
 		cameraOne.close_device()
 
+		timeArray = np.array(trigTimes)
+		np.savetxt('camTimes.csv', timeArray, delimiter = ",", fmt = '%s')
 		print('Done.')
 		break
