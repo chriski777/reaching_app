@@ -30,7 +30,7 @@ def serialize(imageBuffer):
 	#SERIALIZE WITH HDF5
 	#Create Unique Trial names
 	#Turn VDO on to alert ECU to wait until serialization over
-	cameraOne.set_gpo_mode("XI_GPO_ON")
+	#cameraOne.set_gpo_mode("XI_GPO_ON")
 	trial_fn = 'myfile3.hdf5'
 	if not os.path.isdir(path):
 		os.makedirs(path)
@@ -45,7 +45,7 @@ def serialize(imageBuffer):
 	print("Image Buffer contains frames from: %d to %d" %(imageBuffer[0].frameNum,imageBuffer[len(imageBuffer) -1].frameNum))
 	serialTimes.append(serialTime)
 	#turn GPO off 
-	cameraOne.set_gpo_mode("XI_GPO_OFF")
+	#cameraOne.set_gpo_mode("XI_GPO_OFF")
 
 #start communication
 print('Opening first camera...')
