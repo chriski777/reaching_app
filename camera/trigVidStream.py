@@ -23,7 +23,7 @@ trigTimes = deque() #deque of timestamps for each trigger input
 cameraOne = xiapi.Camera(dev_id = 0)
 #cameraTwo = xiapi.Camera(dev_id = 1)
 #Path that we save serialized files into 
-path = '/media/new_drive/trials/'
+path = '/media/pns/0e3152c3-1f53-4c52-b611-400556966cd8/trials/'
 
 #Function for serializing the imageBuffer
 def serialize(imageBuffer):
