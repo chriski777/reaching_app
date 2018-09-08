@@ -19,33 +19,12 @@ queueTime = 5  #Image Buffer queue length (seconds)
 timeOut = 5000 # time interval for trigger to occur before TimeOutError
 serialTimes = deque() #deque of all serialTimes. Use deque because adding is constant time unlike list which is on order of n.
 trigTimes = deque() #deque of timestamps for each trigger input 
+bufferFull = False
 
 cameraOne = xiapi.Camera(dev_id = 0)
 #cameraTwo = xiapi.Camera(dev_id = 1)
 #Path that we save serialized files into 
 path = '/media/pns/0e3152c3-1f53-4c52-b611-400556966cd8/trials/'
-
-#Function for serializing the imageBuffer
-def serialize(imageBuffer):
-	#SERIALIZE WITH HDF5
-	#Create Unique Trial names
-	#Turn VDO on to alert ECU to wait until serialization over
-	#cameraOne.set_gpo_mode("XI_GPO_ON")
-	trial_fn = 'myfile3.hdf5'
-	if not os.path.isdir(path):
-		os.makedirs(path)
-	hdfStart = time.time()
-	h = h5py.File(os.path.join(path, trial_fn), 'w', libver='latest')
-	for i in imageBuffer:
-		h.create_dataset(i.title, data=i.img)
-	hdfEnd = time.time()
-	serialTime = hdfEnd - hdfStart
-	print("Time it took to serialize hdf5: %f ms" % ((serialTime)*1000))
-	print("Image Buffer Length: %d" % len(imageBuffer))
-	print("Image Buffer contains frames from: %d to %d" %(imageBuffer[0].frameNum,imageBuffer[len(imageBuffer) -1].frameNum))
-	serialTimes.append(serialTime)
-	#turn GPO off 
-	#cameraOne.set_gpo_mode("XI_GPO_OFF")
 
 #start communication
 print('Opening first camera...')
@@ -86,6 +65,27 @@ print('Img Data Format set to %s' %cameraOne.get_imgdataformat())
 # print('Exposure was set to %i us' %cameraTwo.get_exposure())
 # print('Gain was set to %f db' %cameraTwo.get_gain())
 # print('Img Data Format set to %s' %cameraTwo.get_imgdataformat())
+
+
+#Function for serializing the imageBuffer
+def serialize(imageBuffer):
+	#SERIALIZE WITH HDF5
+	#Create Unique Trial names
+	trial_fn = time.strftime("%Y%m%d-%H%M%S")
+	#Checks to see if path directory exists
+	if not os.path.isdir(path):
+		os.makedirs(path)
+	hdfStart = time.time()
+	h = h5py.File(os.path.join(path, trial_fn), 'w', libver='latest')
+	for i in imageBuffer:
+		h.create_dataset(i.title, data=i.img)
+	hdfEnd = time.time()
+	serialTime = hdfEnd - hdfStart
+	print("Time it took to serialize hdf5: %f ms" % ((serialTime)*1000))
+	print("Image Buffer Length: %d" % len(imageBuffer))
+	print("Image Buffer contains frames from: %d to %d" %(imageBuffer[0].frameNum,imageBuffer[len(imageBuffer) -1].frameNum))
+	serialTimes.append(serialTime)
+	#turn GPO off 
 
 #create imageBuffers with dequeue
 imageBuffer = deque()
@@ -150,6 +150,9 @@ while True:
 			)
 		#Remove first image in buffer if buffer is filled
 		if (len(imageBuffer) == queueTime*int(cameraOne.get_framerate())):
+			if not(bufferFull):
+				bufferFull = True
+				print("Buffer is full. Ready for Serialization!")
 			removed = imageBuffer.popleft()
 			#print('Frame %d Image popped' % removed.frameNum)
 		#Add tuple of image frame, date time, and numpy array of image
@@ -157,10 +160,10 @@ while True:
 		#cv2.imshow('XiCAM %s' % cameraOne.get_device_name(), data)
 		cv2.waitKey(1)
 	except KeyboardInterrupt:
-		cv2.destroyAllWindows()
 		serialize(imageBuffer)
 		#Flush out the buffer
 		imageBuffer = deque()
+		bufferFull = False
 	except xiapi.Xi_error as err:
 		if err.status == 10:
 			print("VDI not detected.")
