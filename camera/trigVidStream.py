@@ -1,12 +1,18 @@
 from ximea import xiapi
 from collections import deque
 import ImageTuple as imgTup
+import serializeBuffer as serBuf
 import cv2
 import time
 import datetime
 import h5py
 import os 
+import serial
 import numpy as np
+
+#Path that we save serialized files into 
+path = '/media/pns/0e3152c3-1f53-4c52-b611-400556966cd8/trials/'
+ardDevName = '/dev/ttyACM0' #Make sure this device name is correct 
 
 #Time since start of program
 init_time = time.time()
@@ -23,8 +29,6 @@ bufferFull = False
 
 cameraOne = xiapi.Camera(dev_id = 0)
 #cameraTwo = xiapi.Camera(dev_id = 1)
-#Path that we save serialized files into 
-path = '/media/pns/0e3152c3-1f53-4c52-b611-400556966cd8/trials/'
 
 #start communication
 print('Opening first camera...')
@@ -66,26 +70,10 @@ print('Img Data Format set to %s' %cameraOne.get_imgdataformat())
 # print('Gain was set to %f db' %cameraTwo.get_gain())
 # print('Img Data Format set to %s' %cameraTwo.get_imgdataformat())
 
-
-#Function for serializing the imageBuffer
-def serialize(imageBuffer):
-	#SERIALIZE WITH HDF5
-	#Create Unique Trial names
-	trial_fn = time.strftime("%Y%m%d-%H%M%S")
-	#Checks to see if path directory exists
-	if not os.path.isdir(path):
-		os.makedirs(path)
-	hdfStart = time.time()
-	h = h5py.File(os.path.join(path, trial_fn), 'w', libver='latest')
-	for i in imageBuffer:
-		h.create_dataset(i.title, data=i.img)
-	hdfEnd = time.time()
-	serialTime = hdfEnd - hdfStart
-	print("Time it took to serialize hdf5: %f ms" % ((serialTime)*1000))
-	print("Image Buffer Length: %d" % len(imageBuffer))
-	print("Image Buffer contains frames from: %d to %d" %(imageBuffer[0].frameNum,imageBuffer[len(imageBuffer) -1].frameNum))
-	serialTimes.append(serialTime)
-	#turn GPO off 
+def signal_on(serial_conn): 
+	serial_conn.write('1')
+def signal_off(serial_conn):
+	serial_conn.write('0')
 
 #create imageBuffers with dequeue
 imageBuffer = deque()
@@ -95,6 +83,14 @@ imageBuffer = deque()
 img = xiapi.Image()
 #imgTwo = xiapi.Image()
 
+try:
+	#Connect with Arduino
+	print('Initializing connection with Arduino...')
+	ardSer = serial.Serial(ardDevName,9600)
+	print('Arduino Connection Successful')
+	ardSer.write('Succesful Connection')
+except serial.serialutil.SerialException:
+	print('Arduino Connection Failed')
 #start data acquisition
 print('Starting data acquisition...')
 cameraOne.start_acquisition()
@@ -160,7 +156,8 @@ while True:
 		#cv2.imshow('XiCAM %s' % cameraOne.get_device_name(), data)
 		cv2.waitKey(1)
 	except KeyboardInterrupt:
-		serialize(imageBuffer)
+		serialTime = serBuf.serialize(imageBuffer,path)
+		serialTimes.append(serialTime)
 		#Flush out the buffer
 		imageBuffer = deque()
 		bufferFull = False
@@ -168,6 +165,10 @@ while True:
 		if err.status == 10:
 			print("VDI not detected.")
 		print (err)
+		try: 
+			ardSer.close()
+		except:
+			print("No arduino port recognized.")
 		#stop data acquisition
 		print('Stopping acquisition...')
 		cameraOne.stop_acquisition()

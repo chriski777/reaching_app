@@ -1,4 +1,8 @@
 #!/bin/bash
 
+#Increase memory bandwidth for camera
 sudo tee /sys/module/usbcore/parameters/usbfs_memory_mb >/dev/null <<<0
 echo USB setting changed
+#Ensure that you have permission to connect with Arduino
+sudo chmod 777 /dev/ttyACM0
+echo Arduino permission changed
