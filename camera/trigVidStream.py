@@ -1,18 +1,16 @@
 from ximea import xiapi
 from collections import deque
-import ImageTuple as imgTup
-import serializeBuffer as serBuf
+import cam_Buffer.ImageTuple as imgTup
+import cam_Buffer.serializeBuffer as serBuf
 import cv2
 import time
 import datetime
 import h5py
 import os 
-import serial
 import numpy as np
 
 #Path that we save serialized files into 
 path = '/media/pns/0e3152c3-1f53-4c52-b611-400556966cd8/trials/'
-ardDevName = '/dev/ttyACM0' #Make sure this device name is correct 
 
 #Time since start of program
 init_time = time.time()
@@ -24,7 +22,7 @@ sensor_feat = 1 #Set to 1 for faster FPS
 queueTime = 5  #Image Buffer queue length (seconds)
 timeOut = 5000 # time interval for trigger to occur before TimeOutError
 serialTimes = deque() #deque of all serialTimes. Use deque because adding is constant time unlike list which is on order of n.
-trigTimes = deque() #deque of timestamps for each trigger input 
+#trigTimes = deque() #deque of timestamps for each trigger input 
 bufferFull = False
 
 cameraOne = xiapi.Camera(dev_id = 0)
@@ -70,11 +68,6 @@ print('Img Data Format set to %s' %cameraOne.get_imgdataformat())
 # print('Gain was set to %f db' %cameraTwo.get_gain())
 # print('Img Data Format set to %s' %cameraTwo.get_imgdataformat())
 
-def signal_on(serial_conn): 
-	serial_conn.write('1')
-def signal_off(serial_conn):
-	serial_conn.write('0')
-
 #create imageBuffers with dequeue
 imageBuffer = deque()
 #imageBufferTwo = deque()
@@ -83,14 +76,6 @@ imageBuffer = deque()
 img = xiapi.Image()
 #imgTwo = xiapi.Image()
 
-try:
-	#Connect with Arduino
-	print('Initializing connection with Arduino...')
-	ardSer = serial.Serial(ardDevName,9600)
-	print('Arduino Connection Successful')
-	ardSer.write('Succesful Connection')
-except serial.serialutil.SerialException:
-	print('Arduino Connection Failed')
 #start data acquisition
 print('Starting data acquisition...')
 cameraOne.start_acquisition()
@@ -108,7 +93,7 @@ while True:
 		cameraOne.get_image(img,timeout = timeOut)
 		#time of most recent image taken
 		recentTime = time.time()
-		trigTimes.append(recentTime)
+		#trigTimes.append(recentTime)
 		#print('Image %d Acquired' % img.nframe)
 		#create numpy array with data from camera. Dimensions of the array are 
 		#determined by imgdataformat
@@ -165,10 +150,6 @@ while True:
 		if err.status == 10:
 			print("VDI not detected.")
 		print (err)
-		try: 
-			ardSer.close()
-		except:
-			print("No arduino port recognized.")
 		#stop data acquisition
 		print('Stopping acquisition...')
 		cameraOne.stop_acquisition()
@@ -190,8 +171,7 @@ while True:
 			print("Total Frames: %d" % (img.nframe + 1))
 		#stop communication
 		cameraOne.close_device()
-
-		timeArray = np.array(trigTimes)
-		np.savetxt('camTimes.csv', timeArray, delimiter = ",", fmt = '%s')
+		#timeArray = np.array(trigTimes)
+		#np.savetxt('camTimes.csv', timeArray, delimiter = ",", fmt = '%s')
 		print('Done.')
 		break

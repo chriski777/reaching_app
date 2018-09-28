@@ -1,6 +1,6 @@
 from ximea import xiapi
 from collections import deque
-import ImageTuple as imgTup
+import cam_Buffer.ImageTuple as imgTup
 import cv2
 import time
 import datetime
