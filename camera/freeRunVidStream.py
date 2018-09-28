@@ -1,6 +1,8 @@
 from ximea import xiapi
 from collections import deque
 import cam_Buffer.ImageTuple as imgTup
+import cam_init.cameraSetup as camInit
+
 import cv2
 import time
 import datetime
@@ -12,27 +14,12 @@ exp_per = 4000 #Minimum trigger period is dependent on exposure time (microsecon
 gain_val = 5.0 #Gain: sensitivity of camera
 imgdf = 'XI_RAW8' #Direct camera output with no processing. RAW8 is necessary to achieve full FPS capabilities!
 sensor_feat = 1 #Set to 1 for faster FPS 
-
+camSetDict = {'gpi_selector': "XI_GPI_PORT1", 'gpi_mode': "XI_GPI_OFF", 'trigger_source': "XI_TRG_OFF", 'gpo_selector': "XI_GPO_PORT1",
+    'gpo_mode': "XI_GPO_OFF"}
 queueTime = 5  #Image Buffer queue length (seconds)
 
-cameraOne = xiapi.Camera(dev_id = 0)
-# cameraTwo = xiapi.Camera(dev_id = 1)
-#start communication
-print('Opening first camera...')
-cameraOne.open_device()
-# print('Opening second camera...')
-# cameraTwo.open_device()
-#Initialize settings for both cameras
-cameraOne.set_imgdataformat(imgdf)
-cameraOne.set_exposure(exp_per)
-cameraOne.set_gain(gain_val)
-cameraOne.set_sensor_feature_value(sensor_feat)
 
-# cameraTwo.set_imgdataformat(imgdf)
-# cameraTwo.set_exposure(exp_per)
-# cameraTwo.set_gain(gain_val)
-# cameraTwo.set_sensor_feature_value(sensor_feat)
-
+cameraOne = (camInit.cameraDev(0, imgdf, exp_per, gain_val, sensor_feat, camSetDict)).camera
 print ('Camera One Settings: ')
 print('Exposure was set to %i us' %cameraOne.get_exposure())
 print('Gain was set to %f db' %cameraOne.get_gain())

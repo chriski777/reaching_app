@@ -2,6 +2,7 @@ from ximea import xiapi
 from collections import deque
 import cam_Buffer.ImageTuple as imgTup
 import cam_Buffer.serializeBuffer as serBuf
+import cam_init.cameraSetup as camInit
 import cv2
 import time
 import datetime
@@ -24,39 +25,12 @@ timeOut = 5000 # time interval for trigger to occur before TimeOutError
 serialTimes = deque() #deque of all serialTimes. Use deque because adding is constant time unlike list which is on order of n.
 #trigTimes = deque() #deque of timestamps for each trigger input 
 bufferFull = False
-
-cameraOne = xiapi.Camera(dev_id = 0)
-#cameraTwo = xiapi.Camera(dev_id = 1)
-
-#start communication
-print('Opening first camera...')
-cameraOne.open_device()
-# print('Opening second camera...')
-# cameraTwo.open_device()
+camSetDict = {'gpi_selector': "XI_GPI_PORT1", 'gpi_mode': "XI_GPI_TRIGGER", 'trigger_source': "XI_TRG_EDGE_RISING", 'gpo_selector': "XI_GPO_PORT1",
+	'gpo_mode': "XI_GPO_EXPOSURE_ACTIVE"}
 
 
-#Initialize settings for both cameras
-cameraOne.set_imgdataformat(imgdf)
-cameraOne.set_exposure(exp_per)
-cameraOne.set_gain(gain_val)
-cameraOne.set_sensor_feature_value(sensor_feat)
+cameraOne = (camInit.cameraDev(0, imgdf, exp_per, gain_val, sensor_feat, camSetDict)).camera
 
-# cameraTwo.set_imgdataformat(imgdf)
-# cameraTwo.set_exposure(exp_per)
-# cameraTwo.set_gain(gain_val)
-# cameraTwo.set_sensor_feature_value(sensor_feat)
-
-#Prepare camera for trigger mode on rising edge of input signal
-cameraOne.set_gpi_selector("XI_GPI_PORT1")
-cameraOne.set_gpi_mode("XI_GPI_TRIGGER")
-cameraOne.set_trigger_source("XI_TRG_EDGE_RISING")
-
-# cameraTwo.set_gpi_selector("XI_GPI_PORT1")
-# cameraTwo.set_gpi_mode("XI_GPI_TRIGGER")
-# cameraTwo.set_trigger_source("XI_TRG_EDGE_RISING")
-
-cameraOne.set_gpo_selector("XI_GPO_PORT1")
-cameraOne.set_gpo_mode("XI_GPO_EXPOSURE_ACTIVE")
 
 print ('Camera One Settings: ')
 print('Exposure was set to %i us' %cameraOne.get_exposure())
