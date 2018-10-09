@@ -21,4 +21,3 @@ def serialize(imageBuffer,path):
 	print("Image Buffer Length: %d" % len(imageBuffer))
 	print("Image Buffer contains frames from: %d to %d" %(imageBuffer[0].frameNum,imageBuffer[len(imageBuffer) -1].frameNum))
 	return serialTime
-	#turn GPO off 
