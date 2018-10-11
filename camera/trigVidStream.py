@@ -1,8 +1,9 @@
 from ximea import xiapi
 from collections import deque
+from cam_func.cameraSetup import cameraDev as cam_dev
+from cam_func.camera_start_acq import *
 import cam_Buffer.ImageTuple as imgTup
 import cam_Buffer.serializeBuffer as serBuf
-import cam_init.cameraSetup as camInit
 import cv2
 import time
 import datetime
@@ -12,7 +13,6 @@ import numpy as np
 
 #Path that we save serialized files into 
 path = '/media/pns/0e3152c3-1f53-4c52-b611-400556966cd8/trials/'
-
 #Time since start of program
 init_time = time.time()
 #Values for BOTH cameras
@@ -20,55 +20,34 @@ exp_per = 4000 #Minimum trigger period is dependent on exposure time (microsecon
 gain_val = 5.0 #Gain: sensitivity of camera
 imgdf = 'XI_RAW8' #Direct camera output with no processing. RAW8 is necessary to achieve full FPS capabilities!
 sensor_feat = 1 #Set to 1 for faster FPS 
-queueTime = 5  #Image Buffer queue length (seconds)
-timeOut = 5000 # time interval for trigger to occur before TimeOutError
-serialTimes = deque() #deque of all serialTimes. Use deque because adding is constant time unlike list which is on order of n.
-#trigTimes = deque() #deque of timestamps for each trigger input 
-bufferFull = False
-camSetDict = {'gpi_selector': "XI_GPI_PORT1", 'gpi_mode': "XI_GPI_TRIGGER", 'trigger_source': "XI_TRG_EDGE_RISING", 'gpo_selector': "XI_GPO_PORT1",
-	'gpo_mode': "XI_GPO_EXPOSURE_ACTIVE"}
+queue_time = 5  #Image Buffer queue length (seconds)
+time_out = 5000 # time interval for trigger to occur before time_outError
+
+buffer_full = False
+cam_set_dict = {'gpi_selector': "XI_GPI_PORT1", 'gpi_mode': "XI_GPI_TRIGGER", 'trigger_source': "XI_TRG_EDGE_RISING", 'gpo_selector': "XI_GPO_PORT1",
+	'gpo_mode': "XI_GPO_EXPOSURE_ACTIVE",'imgdf': imgdf, 'exp_per': exp_per, 'gain_val': gain_val, 'sensor_feat': sensor_feat}
+num_cameras = 1
+
+#Initialize cameras with user defined settings above
+cam_devices = cam_dev(num_cameras,cam_set_dict,init_time)
+camera_list = cam_devices.cameraList
+
+cameraOne = camera_list[0]
+#Initialize imageBuffers and Image objects for cameras. Also starts acquisitions for all cameras
+img_buffer_dict, img_dict = prepare_stream(camera_list,num_cameras)
+
+base_frames,threshold,meanBaseVector = cam_devices.acquireBaseCol(cameraOne,5,150,501,300)
+col_dict = {'num_bf': base_frames, 'th': threshold, 'mbv': meanBaseVector}
+stream_dict = {'qt': queue_time, 'show': 0, 'path': path}
 
 
-cameraOne = (camInit.cameraDev(0, imgdf, exp_per, gain_val, sensor_feat, camSetDict)).camera
-
-
-print ('Camera One Settings: ')
-print('Exposure was set to %i us' %cameraOne.get_exposure())
-print('Gain was set to %f db' %cameraOne.get_gain())
-print('Img Data Format set to %s' %cameraOne.get_imgdataformat())
-
-# print ('Camera Two Settings: ')
-# print('Exposure was set to %i us' %cameraTwo.get_exposure())
-# print('Gain was set to %f db' %cameraTwo.get_gain())
-# print('Img Data Format set to %s' %cameraTwo.get_imgdataformat())
-
-#create imageBuffers with dequeue
-imageBuffer = deque()
-#imageBufferTwo = deque()
-
-#create instance of Image to store image data and metadata
-img = xiapi.Image()
-#imgTwo = xiapi.Image()
-
-#start data acquisition
-print('Starting data acquisition...')
-cameraOne.start_acquisition()
-#cameraTwo.start_acquisition()
-
-print('Starting video. Press CTRL+C to record. ')
-t0 = time.time()
-startTime = t0
-prevFrame = 0
-intFrame = cameraOne.get_framerate()
 
 while True:
 	try:
 		#get data and pass them from camera to img, wait 10s for possible signals
-		cameraOne.get_image(img,timeout = timeOut)
+		cameraOne.get_image(img,time_out = time_out)
 		#time of most recent image taken
 		recentTime = time.time()
-		#trigTimes.append(recentTime)
-		#print('Image %d Acquired' % img.nframe)
 		#create numpy array with data from camera. Dimensions of the array are 
 		#determined by imgdataformat
 		data = img.get_image_data_numpy()
@@ -104,9 +83,9 @@ while True:
 			data, avgFPS, (10,100), font, 0.5, (255, 255, 255), 1
 			)
 		#Remove first image in buffer if buffer is filled
-		if (len(imageBuffer) == queueTime*int(cameraOne.get_framerate())):
-			if not(bufferFull):
-				bufferFull = True
+		if (len(imageBuffer) == queue_time*int(cameraOne.get_framerate())):
+			if not(buffer_full):
+				buffer_full = True
 				print("Buffer is full. Ready for Serialization!")
 			removed = imageBuffer.popleft()
 			#print('Frame %d Image popped' % removed.frameNum)
@@ -116,10 +95,10 @@ while True:
 		cv2.waitKey(1)
 	except KeyboardInterrupt:
 		serialTime = serBuf.serialize(imageBuffer,path)
-		serialTimes.append(serialTime)
+		serial_times.append(serialTime)
 		#Flush out the buffer
 		imageBuffer = deque()
-		bufferFull = False
+		buffer_full = False
 	except xiapi.Xi_error as err:
 		if err.status == 10:
 			print("VDI not detected.")
@@ -135,8 +114,8 @@ while True:
 			print("No acquisition occured.")
 		else:
 			totalSerial = 0
-			if serialTimes:
-				for i in serialTimes:
+			if serial_times:
+				for i in serial_times:
 					totalSerial += i
 			print ("Available Bandwidth for camera 1: %s " % cameraOne.get_available_bandwidth())
 			# print ("Available Bandwidth for camera 2: %s " % cameraTwo.get_available_bandwidth())

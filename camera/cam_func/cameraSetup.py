@@ -34,11 +34,11 @@ class cameraDev():
 			print ("Available Bandwidth for camera %d: %s " % (i,currCamera.get_available_bandwidth()))
 			counter +=1 
 	#Acquires the BaseCol of given area that we will use as threshold values.
-	def acquireBaseCol(self,curr_cam,avgTime,row1, row2, col):
+	def acquireBaseCol(self,curr_cam, avgTime,row1, row2, col):
 		counter = 0
-		img = xiapi.Image()
 		sampNum = avgTime*int(curr_cam.get_framerate())
 		baseMatrix = np.zeros(shape = (row2-row1, sampNum))
+		img = xiapi.Image()
 		try:
 			print('Calculating BaselineCol...')
 			while (counter < sampNum):
@@ -46,10 +46,10 @@ class cameraDev():
 				data = img.get_image_data_numpy()
 				baseMatrix[:,counter] = data[row1:row2,col]
 				counter +=1
+			print('Finished Calculating BaselineCol')
 		except KeyboardInterrupt:
 			cv2.destroyAllWindows()
 		meanVector = np.mean(baseMatrix, axis = 1)
-		print(meanVector)
 		k = np.zeros(shape = (sampNum,1))
 		for i in range(0,sampNum):
 			diffVec = baseMatrix[:,i] - meanVector
