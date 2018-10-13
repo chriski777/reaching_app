@@ -2,9 +2,9 @@ import os
 import h5py 
 import cv2
 
-dirname = "trialimgs"
-path = '/media/new_drive/trials/'
-trial_fn = 'myfile1.hdf5'
+saved_dir = '/media/pns/0e3152c3-1f53-4c52-b611-400556966cd8/trial_imgs/'
+path = '/media/pns/0e3152c3-1f53-4c52-b611-400556966cd8/trials/'
+trial_fn = '20181012-174419'
 
 def fnConverter(frame, dt):
     frmNum = frame.split(" ")[1]
@@ -12,9 +12,9 @@ def fnConverter(frame, dt):
     return "frm%sdt%s" % (frmNum, arrayDt)
 
 def debayerSave(filename):
-	nestedDir = dirname + "/" + os.path.splitext(filename)[0]
-	if not os.path.isdir(dirname):
-	    os.makedirs(dirname)
+	nestedDir = saved_dir + os.path.splitext(filename)[0]
+	if not os.path.isdir(saved_dir):
+	    os.makedirs(saved_dir)
 	if not os.path.isdir(nestedDir):
 	    os.makedirs(nestedDir)
 	f = h5py.File(os.path.join(path, filename), 'r')
