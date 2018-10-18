@@ -38,11 +38,13 @@ def stop_cam_acq(num_cameras, img_dict):
 #Acquires the BaseCol of given area that we will use as threshold values.
 def acquireBaseCol(curr_cam, avg_time,row1, row2, col):
 	orig_setting = curr_cam.get_trigger_source()
+	orig_gpo_mode = curr_cam.get_gpo_mode()
 	if (orig_setting !="XI_TRG_OFF"):
 		#Necessary to stop acquisition as you can't change camera settings before stopping acquisition
 		#Need to allow free_streaming mode to get frames 
 		curr_cam.stop_acquisition()
 		curr_cam.set_trigger_source("XI_TRG_OFF")
+		curr_cam.set_gpo_mode("XI_GPO_OFF")
 		curr_cam.start_acquisition()
 	counter = 0
 	sampNum = avg_time*int(curr_cam.get_framerate())
@@ -67,6 +69,7 @@ def acquireBaseCol(curr_cam, avg_time,row1, row2, col):
 	k_std = np.std(k)
 	curr_cam.stop_acquisition()
 	curr_cam.set_trigger_source(orig_setting)
+	curr_cam.set_gpo_mode(orig_gpo_mode)
 	curr_cam.start_acquisition()
 	#returning the nframe is necessary if we want to properly calculate the avg fps per second
 	#the frameNumber is not reset after the acquisition of the base column vector. Reset of frame 
