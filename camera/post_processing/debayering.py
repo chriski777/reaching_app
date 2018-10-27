@@ -4,7 +4,7 @@ import cv2
 
 saved_dir = '/media/pns/0e3152c3-1f53-4c52-b611-400556966cd8/trial_imgs/'
 path = '/media/pns/0e3152c3-1f53-4c52-b611-400556966cd8/trials/'
-trial_fn = '20181012-174419'
+trial_fn = '20181016-114126'
 
 def fnConverter(frame, dt):
     frmNum = frame.split(" ")[1]

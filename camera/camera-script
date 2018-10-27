@@ -3,6 +3,9 @@
 #Increase memory bandwidth for camera
 sudo tee /sys/module/usbcore/parameters/usbfs_memory_mb >/dev/null <<<0
 echo USB setting changed
+#Get reading/writing permission on our external harddrive 
+sudo chmod ugo+wx /media/pns/0e3152c3-1f53-4c52-b611-400556966cd8/
+echo Hard drive Writing permission granted
 #Ensure that you have permission to connect with Arduino
-sudo chmod 777 /dev/ttyACM0
-echo Arduino permission changed
+#sudo chmod 777 /dev/ttyACM0
+#echo Arduino permission changed
