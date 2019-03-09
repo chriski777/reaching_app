@@ -1,14 +1,12 @@
 import numpy as np
-import datetime as dt
 class ImageTuple():
-    def __init__(self,frameNum, dateTime, img):
-        if not isinstance(frameNum, long):
-            raise TypeError("Frame Number must be a number")
-        if not isinstance(dateTime, dt.datetime):
-            raise TypeError("DateTime must be a datetime.datetime object")
-        if not isinstance(img, np.ndarray):
-            raise TypeError("Image must be a Numpy array")
-        self.title = str("Frame: %d, DateTime: %s" %(frameNum, dateTime.strftime("%Y%m%d-%H%M%S%f")))
-        self.frameNum = frameNum
+    #Creates an ImageTuple object that has title of image, frame number of image and actual numpy image array. Used to facilitate debayering/serializing process.
+    def __init__(self,cameraNum,frameNum, time, img):
+        # if not isinstance(cameraNum, long):
+        #     raise TypeError("Camera Number must be a number")
+        # if not isinstance(img, np.ndarray):
+        #     raise TypeError("Image must be a Numpy array")
+        self.title = "Camera: " + str(cameraNum) + ", Frame: " + str(frameNum) + ", Time: " + str(time) 
+        self.cameraNum = cameraNum
         self.img = img
 

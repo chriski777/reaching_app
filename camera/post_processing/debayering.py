@@ -2,14 +2,15 @@ import os
 import h5py 
 import cv2
 
-saved_dir = '/media/pns/0e3152c3-1f53-4c52-b611-400556966cd8/trial_imgs/'
-path = '/media/pns/0e3152c3-1f53-4c52-b611-400556966cd8/trials/'
-trial_fn = '20181016-114126'
+saved_dir = '/home/pns/Desktop/project/camera/data/debayered/'
+path = '/home/pns/Desktop/project/camera/data/'
+trial_fn = 'trial: 0, 0'
 
-def fnConverter(frame, dt):
-    frmNum = frame.split(" ")[1]
-    arrayDt = dt.split(" ")[2]
-    return "frm%sdt%s" % (frmNum, arrayDt)
+def fnConverter(camids,frameNum, t):
+    camid = camids.split(" ")[1]
+    frame = frameNum.split(" ")[2]
+    time = t.split(" ")[2]
+    return "camera: %s, frame: %s,  t: %s" % (camid, frame, time)
 
 def debayerSave(filename):
 	nestedDir = saved_dir + os.path.splitext(filename)[0]
@@ -21,8 +22,8 @@ def debayerSave(filename):
 	for key in f.keys():
 	    image = f[key]
 	    debayer = cv2.cvtColor(image.value,cv2.COLOR_BAYER_BG2BGR)
-	    convertedFn = fnConverter(str(key).split(",")[0],str(key).split(",")[1])
-	    cv2.imwrite('%s/imgRGB%s.png' % (nestedDir, convertedFn), debayer)
+	    convertedFn = fnConverter(str(key).split(",")[0],str(key).split(",")[1],str(key).split(",")[2])
+	    cv2.imwrite('%s/%s.png' % (nestedDir, convertedFn), debayer)
 	f.close()
 
 debayerSave(trial_fn)
