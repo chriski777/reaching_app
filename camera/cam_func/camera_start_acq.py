@@ -19,6 +19,27 @@ def initialize_cam_list(num_cameras,cam_set_dict,init_time):
 	global camera_list 
 	camera_list = cam_dev(num_cameras,cam_set_dict,init_time).cameraList
 
+def get_img_width():
+	width = 0
+	if camera_list:
+		width = camera_list[0].get_width()
+	return width
+
+def get_img_height():
+	height = 0
+	if camera_list:
+		height = camera_list[0].get_height()
+	return height
+
+def grab_image(num_cameras, img_dict,timeout = 3000):
+	ret = 1
+	try:
+		for i in range(num_cameras):
+			camera_list[i].get_image(img_dict[i], timeout = timeout)
+	except xiapi.Xi_error as err:
+		ret = 0
+	return ret
+
 #Starts data acquisition for each camera
 def prepare_stream(num_cameras):
 	img_dict = {}
